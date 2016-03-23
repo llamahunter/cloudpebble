@@ -30,8 +30,9 @@ CloudPebble.Editor = (function() {
 
     var rename_file = function(file, new_name) {
         var defer = $.Deferred();
+        var old_name = file.name;
         // Check no-change or duplicate filenames
-        if (new_name == file.name) {
+        if (new_name == old_name) {
             return defer.resolve();
         }
         if (project_source_files[new_name]) {
@@ -39,7 +40,7 @@ CloudPebble.Editor = (function() {
         }
 
         $.post("/ide/project/" + PROJECT_ID + "/source/" + file.id + "/rename", {
-            old_name: file.name,
+            old_name: old_name,
             new_name: new_name,
             modified: file.lastModified
         }).done(function(response) {
@@ -47,12 +48,19 @@ CloudPebble.Editor = (function() {
                 defer.reject(response.error);
             }
             else {
-                delete project_source_files[file.name];
+                _.each(open_codemirrors, function(cm) {
+                    if (cm.file_path == CloudPebble.YCM.pathForFilename(old_name, file.target)) {
+                        cm.file_path = CloudPebble.YCM.pathForFilename(new_name, file.target);
+                    }
+                });
+                CloudPebble.YCM.renameFile(file, new_name);
+                delete project_source_files[old_name];
                 file.name = new_name;
                 file.lastModified = response.modified;
                 CloudPebble.Sidebar.SetItemName('source', file.id, new_name);
                 CloudPebble.FuzzyPrompt.SetCurrentItemName(new_name);
-                project_source_files[file.name] = file;
+                project_source_files[new_name] = file;
+
                 defer.resolve();
             }
         }).fail(function(error) {

@@ -126,6 +126,10 @@ CloudPebble.YCM = new (function() {
         });
     }
 
+    this.pathForFilename = function(file_name, target) {
+        return ((target == 'worker') ? 'worker_src/' : 'src/') + file_name;
+    };
+
     this.initialise = function() {
         if(mInitialised || mIsInitialising || mFailed) {
             return;
@@ -198,13 +202,20 @@ CloudPebble.YCM = new (function() {
             return promise.promise();
         }
         ws_send('delete', {
-                filename: ((file.target == 'worker') ? 'worker_src/' : 'src/') + file.name
+                filename: this.pathForFilename(file.name, file.target)
         }).done(function() {
             promise.resolve();
         }).fail(function() {
             promise.reject();
         });
         return promise.promise();
+    };
+
+    this.renameFile = function(file, new_name) {
+        return ws_send('rename', {
+            filename: this.pathForFilename(file.name, file.target),
+            new_filename: this.pathForFilename(new_name, file.target)
+        })
     };
 
     this.createFile = function(file, content) {
@@ -214,7 +225,7 @@ CloudPebble.YCM = new (function() {
             return promise.promise();
         }
         ws_send('create', {
-                filename: ((file.target == 'worker') ? 'worker_src/' : 'src/') + file.name,
+                filename: this.pathForFilename(file.name, file.target),
                 content: content || ''
         }).done(function() {
             promise.resolve();
