@@ -28,6 +28,15 @@ CloudPebble.GlobalShortcuts = (function () {
     }
 
     return {
+        /** Add or replace global shortcuts
+         *
+         * @param {Object} shortcuts The keys of this object must be strings which represent keyboard shortcuts.
+         * They can Codemirror-compatible shortcut descriptors e.g. "Shift-Cmd-V", or they can reference CodeMirror
+         * commands such as "Save".
+         * The values should be objects which have a descriptive "name" property, and also either have a "func" property
+         * or be functions themselves. For example, a named function fully satisfies the requirements, as does an object
+         * such as {name: "My Function", func: my_anonymous_function}
+         */
         SetShortcutHandlers: function (shortcuts) {
             _.each(shortcuts, function (descriptor, key) {
                 var shortcut = shortcut_for_command(key);
