@@ -278,6 +278,7 @@ class SourceFile(IdeModel):
     file_name = models.CharField(max_length=100, validators=[RegexValidator(r"^[/a-zA-Z0-9_.-]+\.(c|h|js)$", message=_("Invalid filename."))])
     last_modified = models.DateTimeField(blank=True, null=True, auto_now=True)
     folded_lines = models.TextField(default="[]")
+    public = models.BooleanField(default=False)
 
     TARGETS = (
         ('app', _('App')),
