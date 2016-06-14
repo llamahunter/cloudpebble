@@ -21,7 +21,7 @@ CloudPebble.Compile = (function() {
         if (build.state == 3) {
             pbw_badge.append($('<a class="btn btn-small">')
                 .attr('href', build.download)
-                .text(CloudPebble.ProjectProperties.is_runnable ? gettext("pbw") : gettext("zip")));
+                .text(CloudPebble.ProjectProperties.is_runnable ? gettext("pbw") : gettext("tar.gz")));
         }
 
         // Build log thingy.

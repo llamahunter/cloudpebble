@@ -17,7 +17,6 @@ from ide.utils.sdk import generate_wscript_file, generate_jshint_file, generate_
     generate_simplyjs_manifest_dict, generate_pebblejs_manifest_dict, manifest_name_for_project, \
     make_valid_package_manifest_name
 from utils.td_helper import send_td_event
-from utils.zipdir import zip_directory
 from ide.models.build import BuildResult, BuildSize
 from ide.models.files import SourceFile, ResourceFile, ResourceVariant
 from ide.utils.prepreprocessor import process_file as check_preprocessor_directives
@@ -121,8 +120,8 @@ def run_compile(build_result):
     resources = ResourceFile.objects.filter(project=project)
 
     # Assemble the project somewhere
-    temp_dir = tempfile.mkdtemp(dir=os.path.join(settings.CHROOT_ROOT, 'tmp') if settings.CHROOT_ROOT else None)
-    base_dir = os.path.join(temp_dir, make_valid_package_manifest_name(project.app_short_name))
+    base_dir = tempfile.mkdtemp(dir=os.path.join(settings.CHROOT_ROOT, 'tmp') if settings.CHROOT_ROOT else None)
+
     os.mkdir(base_dir)
 
     manifest_filename = manifest_name_for_project(project)
@@ -261,10 +260,9 @@ def run_compile(build_result):
                         save_debug_info(base_dir, build_result, BuildResult.DEBUG_WORKER, 'chalk', os.path.join(base_dir, 'build', 'chalk/pebble-worker.elf'))
                     build_result.save_pbw(temp_file)
                 else:
-                    # Zip up the entire built project directory
-                    with tempfile.NamedTemporaryFile(suffix='.zip') as package_zip:
-                        zip_directory(base_dir, package_zip, preserve_empty=True)
-                        build_result.save_package(package_zip.name)
+                    # tar.gz up the entire built project directory as the build result.
+                    archive = shutil.make_archive("package", 'gztar', base_dir)
+                    build_result.save_package(archive)
 
             build_result.save_build_log(output or 'Failed to get output')
             build_result.state = BuildResult.STATE_SUCCEEDED if success else BuildResult.STATE_FAILED
@@ -295,4 +293,4 @@ def run_compile(build_result):
             pass
         build_result.save()
     finally:
-        shutil.rmtree(temp_dir)
+        shutil.rmtree(base_dir)

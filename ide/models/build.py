@@ -60,11 +60,11 @@ class BuildResult(IdeModel):
 
     @property
     def package(self):
-        return '%spackage.zip' % self._get_dir()
+        return '%spackage.tar.gz' % self._get_dir()
 
     @property
     def package_url(self):
-        return '%spackage.zip' % self.get_url()
+        return '%spackage.tar.gz' % self.get_url()
 
     @property
     def build_log(self):
@@ -111,8 +111,8 @@ class BuildResult(IdeModel):
         if not settings.AWS_ENABLED:
             shutil.move(package_path, self.package)
         else:
-            filename = '%s.zip' % self.project.app_short_name.replace('/', '-')
-            s3.upload_file('builds', self.package, package_path, public=True, download_filename=filename, content_type='application/zip')
+            filename = '%s.tar.gz' % self.project.app_short_name.replace('/', '-')
+            s3.upload_file('builds', self.package, package_path, public=True, download_filename=filename, content_type='application/gzip')
 
     def save_pbw(self, pbw_path):
         if not settings.AWS_ENABLED:
