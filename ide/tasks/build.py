@@ -122,8 +122,6 @@ def run_compile(build_result):
     # Assemble the project somewhere
     base_dir = tempfile.mkdtemp(dir=os.path.join(settings.CHROOT_ROOT, 'tmp') if settings.CHROOT_ROOT else None)
 
-    os.mkdir(base_dir)
-
     manifest_filename = manifest_name_for_project(project)
     try:
         # Resources

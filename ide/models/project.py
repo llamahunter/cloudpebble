@@ -78,6 +78,8 @@ class Project(IdeModel):
     github_hook_uuid = models.CharField(max_length=36, blank=True, null=True)
     github_hook_build = models.BooleanField(default=False)
 
+    project_dependencies = models.ManyToManyField("Project")
+
     def set_dependencies(self, dependencies):
         """ Set the project's dependencies from a dictionary.
         :param dependencies: A dictionary of dependency->version

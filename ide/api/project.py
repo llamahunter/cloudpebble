@@ -30,7 +30,6 @@ def project_info(request, project_id):
     resources = ResourceFile.objects.filter(project=project).order_by('file_name')
     return {
         'type': project.project_type,
-        'success': True,
         'name': project.name,
         'last_modified': str(project.last_modified),
         'app_uuid': project.app_uuid or '',
@@ -279,6 +278,43 @@ def begin_export(request, project_id):
     project = get_object_or_404(Project, pk=project_id, owner=request.user)
     result = create_archive.delay(project.id)
     return {'task_id': result.task_id}
+
+
+@login_required
+@require_safe
+@json_view
+def get_projects(request):
+    filters = {
+        'owner': request.user
+    }
+    exclusions = {}
+    parent_project = None
+    if request.GET.get('libraries', None):
+        filters['project_type'] = 'package'
+        parent_project = get_object_or_404(Project, pk=request.GET['libraries'], owner=request.user)
+        parent_project_dependencies = parent_project.project_dependencies.all()
+        exclusions['pk'] = request.GET['libraries']
+
+    projects = Project.objects.filter(**filters).exclude(**exclusions)
+
+    def process_project(project):
+        data = {
+            'name': project.name,
+            'id': project.id,
+            'app_version_label': project.app_version_label,
+            'latest_successful_build': None
+        }
+        try:
+            data['latest_successful_build'] = str(BuildResult.objects.filter(project=project, state=BuildResult.STATE_SUCCEEDED).latest('id').finished)
+        except BuildResult.DoesNotExist:
+            pass
+        if parent_project:
+            data['depended_on'] = project in parent_project_dependencies
+        return data
+
+    return {
+        'projects': [process_project(project) for project in projects]
+    }
 
 
 @login_required

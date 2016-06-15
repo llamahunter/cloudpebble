@@ -311,10 +311,50 @@ CloudPebble.Dependencies = (function() {
         })
     }
 
+    function get_projects() {
+        return Ajax.Get('/ide/projects', {'libraries': PROJECT_ID}).then(function(data) {
+            return data.projects;
+        });
+    }
+
+    function render_cloudpebble_dependency(project) {
+        var date_text = !!project.latest_successful_build ? CloudPebble.Utils.FormatDatetime(project.latest_successful_build) : gettext("Never");
+        return $('<tr>').append([
+            $('<td>').append($('<input type="checkbox">')
+                .prop('checked', project.depended_on)
+                .prop('disabled', !project.latest_successful_build)),
+            $('<td>').text(project.name),
+            $('<td>').text(project.app_version_label),
+            $('<td>').text(date_text)
+        ]);
+    }
+
+    function setup_cloudpebble_dependencies_table(pane) {
+        var table = pane.find('#cloudpebble-dependencies table');
+        var table_body = table.find('tbody');
+        var no_packages = pane.find('#cloudpebble-dependencies-no-packages');
+
+
+        get_projects().then(function(projects) {
+            if (projects.length > 0) {
+                table.removeClass('hide');
+                no_packages.addClass('hide');
+                table_body.empty();
+                table_body.append(_.map(projects, render_cloudpebble_dependency));
+            }
+            else {
+                table.addClass('hide');
+                no_packages.removeClass('hide');
+            }
+
+        });
+    }
+
     /** Set up function for the entire pane */
     function setup_dependencies_pane(pane) {
         var npm_search_form = pane.find('#dependencies-search-form');
         var dependencies_table = pane.find('#dependencies-table');
+
 
         var kv_table;
 
@@ -395,6 +435,7 @@ CloudPebble.Dependencies = (function() {
         ga('send', 'event', 'project', 'load dependencies');
 
         setup_dependencies_pane(dependencies_template);
+        setup_cloudpebble_dependencies_table(dependencies_template);
 
         CloudPebble.Sidebar.SetActivePane(dependencies_template, 'dependencies');
     }
